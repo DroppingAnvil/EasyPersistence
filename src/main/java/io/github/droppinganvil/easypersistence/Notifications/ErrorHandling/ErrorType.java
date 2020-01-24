@@ -13,4 +13,7 @@ public enum ErrorType {
     Object,
     Edit_After_Complete,
     Sent_Before_Complete,
+    Directory_Not_Found,
+    Directory_Creation_Failed,
+    File_Unknown,
 }

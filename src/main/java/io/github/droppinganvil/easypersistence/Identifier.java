@@ -17,4 +17,9 @@ public class Identifier {
         if (objectIdentifier == null) new Error(ErrorType.Null_Object_ID).addMessage("objectID in Identifier constructor cannot be null")
         .addUser(user).complete().send();
     }
+
+    public String getClassIdentifier() {return classIdentifier;}
+    public Integer getObjectIdentifier() {return objectIdentifier;}
+    public String getProjectIdentifier() {return user.getProjectIdentifier();}
+    public PersistenceUser getUser() {return user;}
 }
