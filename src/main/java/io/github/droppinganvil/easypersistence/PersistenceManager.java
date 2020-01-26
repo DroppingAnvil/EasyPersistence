@@ -5,13 +5,18 @@ import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
 import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
+import io.github.droppinganvil.easypersistence.Types.Objects.Register;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PersistenceManager {
     //Support multithread loading
-    private static Boolean multithreadMode = false;
     private final static ConcurrentHashMap<String, PersistenceUser> identifierMap = new ConcurrentHashMap<String, PersistenceUser>();
+    public static Queue<PersistenceObject> largeLoad = new LinkedList<PersistenceObject>();
+    //quickLoad should only be used for time critical task such as loading users data when they login largeLoad should be used if loading mass files beforehand
+    public static Queue<PersistenceObject> quickLoad = new LinkedList<PersistenceObject>();
 
     public static PersistenceUser getUser(String s) {
         return identifierMap.get(s);
@@ -33,13 +38,6 @@ public class PersistenceManager {
         new Info(InfoType.New_Identifier_Registered, Level.Register)
                 .addUser(user).addMessage(identifier).complete().send();
     }
-    public static Boolean getMultithreadMode() {
-        return multithreadMode;
-    }
-    public static void enableMultithreadMode() {
-        multithreadMode = true;
-        new Info(InfoType.Multithread_Enabled, Level.Processing).complete().send();
-    }
     public static void sendGlobalError(Error error) {
         for (PersistenceUser user : identifierMap.values()) {
             user.handleGlobalError(error);
@@ -49,5 +47,8 @@ public class PersistenceManager {
         for (PersistenceUser user : identifierMap.values()) {
             user.handleInfo(info);
         }
+    }
+    public static void load() {
+        Register.defaults();
     }
 }

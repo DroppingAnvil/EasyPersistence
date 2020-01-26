@@ -12,23 +12,23 @@ import java.util.HashMap;
 public class PersistenceUser {
     private Class<?> userClass;
     private String preferredName;
-    private HashMap<Integer, Class<?>> classMap;
-    private HashMap<Integer, PersistenceObject> ownedObjects;
+    private HashMap<String, Class<?>> classMap;
+    private HashMap<String, PersistenceObject> ownedObjects;
     private File directory;
 
     public PersistenceUser(Class<?> owner, String name) {
         this.userClass = owner;
         this.preferredName = name;
-        this.ownedObjects = new HashMap<Integer, PersistenceObject>();
-        this.classMap = new HashMap<Integer, Class<?>>();
+        this.ownedObjects = new HashMap<String, PersistenceObject>();
+        this.classMap = new HashMap<String, Class<?>>();
         this.directory = new File(getProjectIdentifier());
     }
 
     public PersistenceUser(Class<?> owner, String name, File directory) {
         this.userClass = owner;
         this.preferredName = name;
-        this.ownedObjects = new HashMap<Integer, PersistenceObject>();
-        this.classMap = new HashMap<Integer, Class<?>>();
+        this.ownedObjects = new HashMap<String, PersistenceObject>();
+        this.classMap = new HashMap<String, Class<?>>();
         this.directory = directory;
     }
 
@@ -37,10 +37,11 @@ public class PersistenceUser {
             new Info(InfoType.Writing_File, Level.File).addMessage("Directory did not exist creating it now.").complete().send();
             if (!directory.mkdir()) new Error(ErrorType.Directory_Creation_Failed).addObject(this).complete().send();
         }
+        PersistenceManager.registerUser(identifier, this);
     }
 
-    public final void registerObject(String objectID, PersistenceObject object) {
-        // objectIDs will by done simply by classID_objectID
+    public final void registerObject(String classID, String objectID, PersistenceObject object) {
+        ownedObjects.put(classID + "_" + objectID, object);
     }
 
     public void handleLocalError(Error error) {
@@ -55,11 +56,11 @@ public class PersistenceUser {
 
     }
 
-    public final HashMap<Integer, Class<?>> getClassMap() {
+    public final HashMap<String, Class<?>> getClassMap() {
         return classMap;
     }
 
-    public final HashMap<Integer, PersistenceObject> getOwnedObjects() {
+    public final HashMap<String, PersistenceObject> getOwnedObjects() {
         return ownedObjects;
     }
 
@@ -67,11 +68,19 @@ public class PersistenceUser {
         return userClass;
     }
 
-    public void registerClass(Integer classID, Class<?> def) {
+    public void registerClass(String classID, Class<?> def) {
         classMap.put(classID, def);
     }
 
     public final String getProjectIdentifier() {
         return preferredName;
+    }
+
+    public Boolean isClassSaved(String classID) {
+        return new File(directory, classID).exists();
+    }
+
+    public File getDirectory() {
+        return directory;
     }
 }

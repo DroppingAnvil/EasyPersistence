@@ -5,9 +5,9 @@ import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error
 
 public class Identifier {
     private String classIdentifier;
-    private Integer objectIdentifier;
+    private String objectIdentifier;
     private PersistenceUser user;
-    public Identifier(String classID, Integer objectID, PersistenceUser user) {
+    public Identifier(String classID, String objectID, PersistenceUser user) {
         this.classIdentifier = classID;
         this.objectIdentifier = objectID;
         this.user = user;
@@ -19,7 +19,7 @@ public class Identifier {
     }
 
     public String getClassIdentifier() {return classIdentifier;}
-    public Integer getObjectIdentifier() {return objectIdentifier;}
+    public String getObjectIdentifier() {return objectIdentifier;}
     public String getProjectIdentifier() {return user.getProjectIdentifier();}
     public PersistenceUser getUser() {return user;}
 }
