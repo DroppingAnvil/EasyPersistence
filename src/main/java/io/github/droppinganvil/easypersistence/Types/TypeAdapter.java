@@ -7,9 +7,12 @@ import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
 import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
 import io.github.droppinganvil.easypersistence.Types.Objects.Buildable;
+import io.github.droppinganvil.easypersistence.Types.Objects.ComplexBuildable;
 import io.github.droppinganvil.easypersistence.Types.Objects.ObjectTypes;
+import io.github.droppinganvil.easypersistence.Types.Objects.Response.LoadedObject;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.Precision;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.Response;
+import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,32 +47,62 @@ public class TypeAdapter {
         return new Response(Precision.None, null);
     }
 
-    public void directProcessing(String fieldName, String fieldValue, Object o, Object oo, Boolean load) {
+    public Boolean load(Object targetMain, Object target, String fieldName) {
+        try {
+            loadSimple(fieldName, targetMain, getLoadedObject(target));
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            new Error(ErrorType.File_Unknown).addMessage(e.getMessage()).complete().send();
+            return false;
+        }
+        return true;
+    }
+
+    public SaveData getSaveData(Object o) {
+        Boolean complex = false;
         Response response = locate(o, ObjectTypes.buildables);
         if (response.getPrecision() == Precision.None) {
             response = locate(o, ObjectTypes.complexBuildables);
+            complex = true;
         }
         //If its still not found there is no chance of finding it and that object's class' author should be lectured immediately
         if (response.getPrecision() == Precision.None) {
             new Error(ErrorType.Non_Buildable_Object).addObject(o).complete().send();
-            return;
+            return null;
         }
-        try {
-            if (load) {
-                loadSimple(fieldName, fieldValue, o, oo, response);
-            }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            //TODO Use Notifications.ErrorHandling.Error after debugging
-            e.printStackTrace();
+        if (complex) {
+            return new SaveData(ObjectTypes.complexBuildables.get(response.getTargetClass()).getSaveData(o));
         }
+        return new SaveData(ObjectTypes.buildables.get(response.getTargetClass()).getSaveData(o));
+    }
+    //Give collection or string from disk as o
+    public LoadedObject getLoadedObject(Object o) {
+        Response response;
+        Boolean complex = false;
+        if (o instanceof Collection) {
+            response = locate(o, ObjectTypes.complexBuildables);
+            complex = true;
+        } else {
+            response = locate(o, ObjectTypes.buildables);
+        }
+        if (response.getPrecision() == Precision.None) {
+            new Error(ErrorType.Non_Buildable_Object).addObject(o).complete().send();
+            return null;
+        }
+        if (complex) {
+            return new LoadedObject(
+                    ObjectTypes.complexBuildables.get(response.getTargetClass()).build((Collection<String>) o),
+                    ObjectTypes.complexBuildables.get(response.getTargetClass())
+            );
+        }
+        return new LoadedObject(
+                ObjectTypes.buildables.get(response.getTargetClass()).build((String) o),
+                ObjectTypes.buildables.get(response.getTargetClass())
+        );
+
     }
 
-    private void processCollection(Object o) {
-
-    }
-
-    private void loadSimple(String fieldName, String fieldValue, Object o, Object oo, Response r) throws NoSuchFieldException, IllegalAccessException {
-        o.getClass().getField(fieldName).set(oo, Buildable.class.cast(r.getTargetClass()).build(fieldValue));
+    private void loadSimple(String fieldName, Object o, LoadedObject loadedObject) throws NoSuchFieldException, IllegalAccessException {
+        o.getClass().getField(fieldName).set(o, loadedObject.getObject());
     }
 
 }

@@ -3,7 +3,9 @@ package io.github.droppinganvil.easypersistence.Notifications.ErrorHandling;
 public enum ErrorType {
     Conflict_Identifier,
     Conflict_Unknown,
+    Issue_Generic,
     Null_Class,
+    Null_Object,
     Null_Class_ID,
     Null_Identifier,
     Null_Object_ID,

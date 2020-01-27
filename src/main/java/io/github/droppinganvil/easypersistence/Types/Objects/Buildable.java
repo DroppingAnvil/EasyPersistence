@@ -6,7 +6,7 @@ package io.github.droppinganvil.easypersistence.Types.Objects;
  */
 public interface Buildable {
     /**
-     * This is used by the TypeAdapter to determine which Buildable to use it MUST be the class of your object that contains its constructor
+     * This is used by the TypeAdapter to determine which Buildable to use it should be the class of your object that contains its constructor
      * @see io.github.droppinganvil.easypersistence.Types.TypeAdapter
      */
     Class<?> getObjectClass();
