@@ -8,4 +8,6 @@ public enum InfoType {
     Writing,
     Writing_File,
     Ready,
+    Cast_Success,
+    Cast_Fail,
 }
