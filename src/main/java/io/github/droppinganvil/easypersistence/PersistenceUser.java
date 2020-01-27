@@ -5,6 +5,8 @@ import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
 import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
+import io.github.droppinganvil.easypersistence.Types.Objects.Adapter;
+import io.github.droppinganvil.easypersistence.Types.YAMLAdapter;
 
 import java.io.File;
 import java.util.HashMap;
@@ -15,6 +17,7 @@ public class PersistenceUser {
     private HashMap<String, Class<?>> classMap;
     private HashMap<String, PersistenceObject> ownedObjects;
     private File directory;
+    private Adapter adapter;
 
     public PersistenceUser(Class<?> owner, String name) {
         this.userClass = owner;
@@ -22,14 +25,16 @@ public class PersistenceUser {
         this.ownedObjects = new HashMap<String, PersistenceObject>();
         this.classMap = new HashMap<String, Class<?>>();
         this.directory = new File(getProjectIdentifier());
+        this.adapter = new YAMLAdapter();
     }
 
-    public PersistenceUser(Class<?> owner, String name, File directory) {
+    public PersistenceUser(Class<?> owner, String name, File directory, Adapter adapter) {
         this.userClass = owner;
         this.preferredName = name;
         this.ownedObjects = new HashMap<String, PersistenceObject>();
         this.classMap = new HashMap<String, Class<?>>();
         this.directory = directory;
+        this.adapter = adapter;
     }
 
     public final void registerUser(String identifier) {
@@ -82,5 +87,9 @@ public class PersistenceUser {
 
     public File getDirectory() {
         return directory;
+    }
+
+    public Adapter getAdapter() {
+        return adapter;
     }
 }

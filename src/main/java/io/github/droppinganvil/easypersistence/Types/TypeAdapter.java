@@ -6,24 +6,21 @@ import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
 import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
-import io.github.droppinganvil.easypersistence.Types.Objects.Buildable;
-import io.github.droppinganvil.easypersistence.Types.Objects.ComplexBuildable;
 import io.github.droppinganvil.easypersistence.Types.Objects.ObjectTypes;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.LoadedObject;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.Precision;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.Response;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
+import io.github.droppinganvil.easypersistence.Types.Objects.Writable;
 
 import java.util.Collection;
 import java.util.HashMap;
 
 public class TypeAdapter {
-    private Class<?> extender;
+    private Writable extender;
 
-    public TypeAdapter(Class<?> extender) {
+    public void setExtender(Writable extender) {
         this.extender = extender;
-
-
     }
 
     private Boolean canCast(Class<?> c, Object o) {
@@ -55,6 +52,14 @@ public class TypeAdapter {
             return false;
         }
         return true;
+    }
+
+    private void save(Object o, String fieldName) {
+        extender.save(fieldName, getSaveData(o));
+    }
+
+    private void write() {
+        extender.write();
     }
 
     public SaveData getSaveData(Object o) {
