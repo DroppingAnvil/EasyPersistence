@@ -13,6 +13,7 @@ import io.github.droppinganvil.easypersistence.Types.Objects.Response.Response;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
 import io.github.droppinganvil.easypersistence.Types.Objects.Writable;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -44,14 +45,8 @@ public class TypeAdapter {
         return new Response(Precision.None, null);
     }
 
-    public Boolean load(Object targetMain, Object target, String fieldName) {
-        try {
-            loadSimple(fieldName, targetMain, getLoadedObject(target));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            new Error(ErrorType.File_Unknown).addMessage(e.getMessage()).complete().send();
-            return false;
-        }
-        return true;
+    public void load(Object targetMain, Object target, Field field) throws IllegalAccessException {
+            setField(field, targetMain, getLoadedObject(target));
     }
 
     private void save(Object o, String fieldName) {
@@ -106,8 +101,8 @@ public class TypeAdapter {
 
     }
 
-    private void loadSimple(String fieldName, Object o, LoadedObject loadedObject) throws NoSuchFieldException, IllegalAccessException {
-        o.getClass().getField(fieldName).set(o, loadedObject.getObject());
+    private void setField(Field field, Object o, LoadedObject loadedObject) throws IllegalAccessException {
+        field.set(o, loadedObject.getObject());
     }
 
 }

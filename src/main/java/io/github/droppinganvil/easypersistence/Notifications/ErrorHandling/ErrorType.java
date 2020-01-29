@@ -19,4 +19,5 @@ public enum ErrorType {
     Directory_Creation_Failed,
     File_Unknown,
     Non_Buildable_Object,
+    No_Field,
 }

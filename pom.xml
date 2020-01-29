@@ -7,6 +7,13 @@
     <groupId>io.github.droppinganvil</groupId>
     <artifactId>EasyPersistence</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <dependencies>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.21</version>
+        </dependency>
+    </dependencies>
 
 
 </project>

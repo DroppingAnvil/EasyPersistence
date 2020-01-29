@@ -6,23 +6,24 @@ import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
 import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
 import io.github.droppinganvil.easypersistence.Types.Objects.Adapter;
-import io.github.droppinganvil.easypersistence.Types.YAMLAdapter;
+import io.github.droppinganvil.easypersistence.Types.YAML.YAMLAdapter;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PersistenceUser {
     private Class<?> userClass;
     private String preferredName;
     private HashMap<String, Class<?>> classMap;
-    private HashMap<String, PersistenceObject> ownedObjects;
+    private ConcurrentHashMap<String, PersistenceObject> ownedObjects;
     private File directory;
     private Adapter adapter;
 
     public PersistenceUser(Class<?> owner, String name) {
         this.userClass = owner;
         this.preferredName = name;
-        this.ownedObjects = new HashMap<String, PersistenceObject>();
+        this.ownedObjects = new ConcurrentHashMap<String, PersistenceObject>();
         this.classMap = new HashMap<String, Class<?>>();
         this.directory = new File(getProjectIdentifier());
         this.adapter = new YAMLAdapter();
@@ -31,10 +32,23 @@ public class PersistenceUser {
     public PersistenceUser(Class<?> owner, String name, File directory, Adapter adapter) {
         this.userClass = owner;
         this.preferredName = name;
-        this.ownedObjects = new HashMap<String, PersistenceObject>();
+        this.ownedObjects = new ConcurrentHashMap<String, PersistenceObject>();
         this.classMap = new HashMap<String, Class<?>>();
         this.directory = directory;
         this.adapter = adapter;
+    }
+
+    public final void cycle() {
+        for (PersistenceObject po : ownedObjects.values()) {
+            if (po.cycle()) {
+                if (po.getLoaded()) {
+                    adapter.saveObject(po);
+                } else {
+                    adapter.loadObject(po);
+                    po.setLoaded();
+                }
+            }
+        }
     }
 
     public final void registerUser(String identifier) {
@@ -65,7 +79,7 @@ public class PersistenceUser {
         return classMap;
     }
 
-    public final HashMap<String, PersistenceObject> getOwnedObjects() {
+    public final ConcurrentHashMap<String, PersistenceObject> getOwnedObjects() {
         return ownedObjects;
     }
 
