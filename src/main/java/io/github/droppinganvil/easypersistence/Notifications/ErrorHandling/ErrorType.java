@@ -20,4 +20,5 @@ public enum ErrorType {
     File_Unknown,
     Non_Buildable_Object,
     No_Field,
+    Raw_Usage,
 }

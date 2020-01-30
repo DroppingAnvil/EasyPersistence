@@ -1,9 +1,6 @@
 package io.github.droppinganvil.easypersistence.Types.Objects;
 
-import io.github.droppinganvil.easypersistence.Types.Objects.DefaultObjects.PersistentBoolean;
-import io.github.droppinganvil.easypersistence.Types.Objects.DefaultObjects.PersistentDouble;
-import io.github.droppinganvil.easypersistence.Types.Objects.DefaultObjects.PersistentInteger;
-import io.github.droppinganvil.easypersistence.Types.Objects.DefaultObjects.PersistentString;
+import io.github.droppinganvil.easypersistence.Types.Objects.DefaultObjects.*;
 
 /**
  * Registers all default object handling
@@ -14,8 +11,10 @@ public class Register {
         register(new PersistentInteger());
         register(new PersistentBoolean());
         register(new PersistentDouble());
+        register(new PersistentCollection());
     }
     public static void register(Buildable b) {
         ObjectTypes.buildables.put(b.getObjectClass(), b);
     }
+    public static void register(ComplexBuildable cb) {ObjectTypes.complexBuildables.put(cb.getObjectClass(), cb);}
 }

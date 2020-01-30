@@ -28,4 +28,11 @@ public class SaveData {
     public SaveDataType getSaveDataType() {
         return saveDataType;
     }
+
+    public Object getData() {
+        if (collection == null) {
+            return string;
+        }
+        return collection;
+    }
 }

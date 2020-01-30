@@ -8,7 +8,6 @@ import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
 import io.github.droppinganvil.easypersistence.PersistenceObject;
 import io.github.droppinganvil.easypersistence.Types.Objects.Adapter;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
-import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveDataType;
 import io.github.droppinganvil.easypersistence.Types.Objects.Status.State;
 import io.github.droppinganvil.easypersistence.Types.Objects.Status.Status;
 import io.github.droppinganvil.easypersistence.Types.TypeAdapter;
@@ -31,20 +30,20 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
 
     public void loadObject(PersistenceObject o) {
         try {
-            state = State.Read;
+            changeState(State.Read, null);
             s = o.getFile().getPath();
             if (!o.getFile().exists()) {
                 new Info(InfoType.Writing_File, Level.File).addMessage("File did not exist.").addUser(o.getUser()).complete().send();
-                state = State.Write;
+                changeState(State.Write, null);
                 if (!o.getFile().createNewFile()) {
                     Error error = new Error(ErrorType.File_Unknown).addUser(o.getUser()).complete();
                     errors.put(error, false);
                     error.send();
-                    state = State.Issue;
+                    changeState(State.Issue, error);
                     return;
                 }
             }
-                state = State.Read;
+                changeState(State.Read, null);
                 LinkedHashMap<String, Object> root = yaml.load(new FileInputStream(o.getFile()));
                 for (String field : root.keySet()) {
                     Object ob = root.get(field);
@@ -58,29 +57,34 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                                 .addUser(o.getUser()).complete();
                         errors.put(error, false);
                         error.send();
-                        state = State.Issue;
+                        changeState(State.Issue, error);
                     }
                     if (f != null) {
                         try {
-                            load(o.getObject(), ob, f);
+                            Error error = load(o.getObject(), ob, f);
+                            if (error != null) {
+                                errors.put(error, false);
+                                error.send();
+                                changeState(State.Issue, error);
+                            }
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
                             exceptions.put(e, false);
-                            state = State.Critical;
+                            changeState(State.Critical, e);
                         }
                     }
                 }
         } catch (Exception e) {
             exceptions.put(e, false);
             e.printStackTrace();
-            state = State.Critical;
+            changeState(State.Critical, null);
         }
-        if (state == State.Read) state = State.Idle;
+        changeState(State.Idle, null);
     }
 
     public void saveObject(PersistenceObject o) {
         try {
-            state = State.Write;
+            changeState(State.Write, null);
             s = o.getFile().getPath();
             if (!o.getFile().exists()) {
                 new Info(InfoType.Writing_File, Level.File).addMessage("File did not exist.").addUser(o.getUser()).complete().send();
@@ -88,29 +92,43 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                     Error error = new Error(ErrorType.File_Unknown).addUser(o.getUser()).complete();
                     errors.put(error, false);
                     error.send();
-                    state = State.Issue;
+                    changeState(State.Issue, error);
                     return;
                 }
             }
-            LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
-            for (Field field : o.getObject().getClass().getFields()) {
-                SaveData saveData = getSaveData(field.get(o.getObject()));
-                if (saveData != null) {
-                    if (saveData.getSaveDataType() == SaveDataType.Collection) {
-                        data.put(field.getName(), saveData.getCollection());
+            changeState(State.Read, null);
+            LinkedHashMap<String, Object> data = yaml.load(new FileInputStream(o.getFile()));
+            for (Field field : o.getObject().getClass().getDeclaredFields()) {
+                if (field.isAccessible()) {
+                    Object obj = getSaveData(field.get(o.getObject()), field);
+                    if (!(obj instanceof Error)) {
+                        if (((SaveData) obj).getData() != null) {
+                            if (data.containsKey(field.getName())) {
+                                data.remove(field.getName());
+                            }
+                            data.put(field.getName(), ((SaveData) obj).getData());
+                        } else {
+                            Error error = new Error(ErrorType.Null_Object).addObject(obj)
+                                    .addMessage("Data for field '" + field.getName() + "' on '" + o.getObject().getClass().getName() + "' came back null")
+                                    .complete();
+                            errors.put(error, false);
+                            error.send();
+                            changeState(State.Issue, error);
+                        }
                     } else {
-                        data.put(field.getName(), saveData.getString());
+                        errors.put((Error) obj, false);
+                        changeState(State.Issue, obj);
                     }
-                    FileWriter writer = new FileWriter(o.getFile());
-                    yaml.dump(data, writer);
-                }
             }
+            }
+            FileWriter writer = new FileWriter(o.getFile());
+            yaml.dump(data, writer);
         } catch (Exception e) {
             e.printStackTrace();
             exceptions.put(e, false);
-            state = State.Critical;
+            changeState(State.Critical, e);
         }
-        if (state == State.Write) state = State.Idle;
+        changeState(State.Idle, null);
     }
 
     public Status getStatus() {
@@ -130,5 +148,10 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                 errors.replace(e, false, true);
             }
         }
+    }
+    private void changeState(State state, Object obj) {
+        this.state = state;
+        //Pass on obj (Error, Exception or null)
+        //TODO Web
     }
 }

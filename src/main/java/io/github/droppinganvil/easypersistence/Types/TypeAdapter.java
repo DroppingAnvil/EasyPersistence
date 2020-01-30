@@ -6,23 +6,18 @@ import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
 import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
+import io.github.droppinganvil.easypersistence.Types.Objects.Buildable;
 import io.github.droppinganvil.easypersistence.Types.Objects.ObjectTypes;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.LoadedObject;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.Precision;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.Response;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
-import io.github.droppinganvil.easypersistence.Types.Objects.Writable;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 
 public class TypeAdapter {
-    private Writable extender;
-
-    public void setExtender(Writable extender) {
-        this.extender = extender;
-    }
 
     private Boolean canCast(Class<?> c, Object o) {
         try {
@@ -35,62 +30,93 @@ public class TypeAdapter {
             return false;
         }
     }
-    public Response locate(Object o, HashMap<Class<?>, ?> map) {
-        if (map.containsKey(o.getClass())) return new Response(Precision.Exact, map.get(o.getClass()).getClass());
+    public Response locate(Object o, HashMap<Class<?>, ?> map, Boolean complex) {
+        if (map.containsKey(o.getClass())) return new Response(Precision.Exact, map.get(o.getClass()).getClass(), complex);
         for (Class<?> c : map.keySet()) {
             if (canCast(c, o)) {
-                return new Response(Precision.Cast, c);
+                return new Response(Precision.Cast, c, complex);
             }
         }
-        return new Response(Precision.None, null);
+        return new Response(Precision.None, null, complex);
     }
 
-    public void load(Object targetMain, Object target, Field field) throws IllegalAccessException {
-            setField(field, targetMain, getLoadedObject(target));
-    }
-
-    private void save(Object o, String fieldName) {
-        extender.save(fieldName, getSaveData(o));
-    }
-
-    private void write() {
-        extender.write();
-    }
-
-    public SaveData getSaveData(Object o) {
-        Boolean complex = false;
-        Response response = locate(o, ObjectTypes.buildables);
-        if (response.getPrecision() == Precision.None) {
-            response = locate(o, ObjectTypes.complexBuildables);
-            complex = true;
-        }
-        //If its still not found there is no chance of finding it and that object's class' author should be lectured immediately
-        if (response.getPrecision() == Precision.None) {
-            new Error(ErrorType.Non_Buildable_Object).addObject(o).complete().send();
+    public Error load(Object targetMain, Object target, Field field) throws IllegalAccessException {
+        Object o = getLoadedObject(target, field);
+        if (o instanceof Error) return (Error) o;
+            setField(field, targetMain, (LoadedObject) o);
             return null;
+    }
+
+    public Object build(String s, Class<?> clazz) {
+        if (ObjectTypes.buildables.containsKey(clazz)) {
+            Buildable b = ObjectTypes.buildables.get(clazz);
+            try {
+                return ObjectTypes.buildables.get(clazz).build(s);
+            } catch (Exception e) {
+                e.printStackTrace();
+                if (b != null) {
+                    Error error = new Error(ErrorType.Issue_Generic)
+                            .addMessage("Exception produced on using buildable '" + b.getClass().getName() + "' located in " + b.getClass().getPackage())
+                            .addObject(b).complete();
+                    error.send();
+                    return error;
+                }
+                Error error = new Error(ErrorType.Issue_Generic).addMessage(e.getMessage()).complete();
+                error.send();
+                return error;
+            }
+        } else {
+            return new Error(ErrorType.Non_Buildable_Object).addMessage("No buildable found for " + clazz.getName()).addObject(s).complete();
         }
-        if (complex) {
-            return new SaveData(ObjectTypes.complexBuildables.get(response.getTargetClass()).getSaveData(o));
+    }
+
+    /**
+     * Simple retriever designed to work with Collections to generate elements
+     * @param o Object
+     * @param clazz Target Def
+     * @return String or Error
+     */
+    public Object getSave(Object o, Class<?> clazz) {
+        if (ObjectTypes.buildables.containsKey(clazz)) {
+            Buildable b = ObjectTypes.buildables.get(clazz);
+            try {
+                return ObjectTypes.buildables.get(clazz).getSaveData(o);
+            } catch (Exception e) {
+                e.printStackTrace();
+                if (b != null) {
+                    Error error = new Error(ErrorType.Issue_Generic)
+                            .addMessage("Exception produced on using buildable '" + b.getClass().getName() + "' located in " + b.getClass().getPackage())
+                            .addObject(b).complete();
+                    error.send();
+                    return error;
+                }
+                Error error = new Error(ErrorType.Issue_Generic).addMessage(e.getMessage()).complete();
+                error.send();
+                return error;
+            }
+        } else {
+            return new Error(ErrorType.Non_Buildable_Object).addMessage("No buildable found for " + clazz.getName()).addObject(o.getClass().getName()).complete();
+        }
+    }
+
+
+    public Object getSaveData(Object o, Field field) {
+        Object obj = locate(o);
+        if (obj instanceof Error) return obj;
+        Response response = (Response) obj;
+        if (response.isComplex()) {
+            return new SaveData(ObjectTypes.complexBuildables.get(response.getTargetClass()).getSaveData(o, field, this));
         }
         return new SaveData(ObjectTypes.buildables.get(response.getTargetClass()).getSaveData(o));
     }
     //Give collection or string from disk as o
-    public LoadedObject getLoadedObject(Object o) {
-        Response response;
-        Boolean complex = false;
-        if (o instanceof Collection) {
-            response = locate(o, ObjectTypes.complexBuildables);
-            complex = true;
-        } else {
-            response = locate(o, ObjectTypes.buildables);
-        }
-        if (response.getPrecision() == Precision.None) {
-            new Error(ErrorType.Non_Buildable_Object).addObject(o).complete().send();
-            return null;
-        }
-        if (complex) {
+    public Object getLoadedObject(Object o, Field field) {
+        Object obj = locate(o);
+        if (obj instanceof Error) return obj;
+        Response response = (Response) obj;
+        if (response.isComplex()) {
             return new LoadedObject(
-                    ObjectTypes.complexBuildables.get(response.getTargetClass()).build((Collection<String>) o),
+                    ObjectTypes.complexBuildables.get(response.getTargetClass()).build((Collection<String>) o, o, field, this),
                     ObjectTypes.complexBuildables.get(response.getTargetClass())
             );
         }
@@ -99,6 +125,21 @@ public class TypeAdapter {
                 ObjectTypes.buildables.get(response.getTargetClass())
         );
 
+    }
+
+    private Object locate(Object o) {
+        Response simple = locate(o, ObjectTypes.buildables, false);
+        Response complexx = locate(o, ObjectTypes.complexBuildables, true);
+        if (simple.getPrecision() == Precision.None && complexx.getPrecision() == Precision.None) {
+            return new Error(ErrorType.Non_Buildable_Object).addObject(o)
+                    .addMessage("A builder could not be found for Object '" + o.getClass().getName() + "' in package " + o.getClass().getPackage().getName())
+                    .complete();
+        }
+        if (simple.getPrecision().i() >= complexx.getPrecision().i()) {
+            return simple;
+        } else {
+            return complexx;
+        }
     }
 
     private void setField(Field field, Object o, LoadedObject loadedObject) throws IllegalAccessException {
