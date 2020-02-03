@@ -9,33 +9,31 @@ import io.github.droppinganvil.easypersistence.Types.Objects.Adapter;
 import io.github.droppinganvil.easypersistence.Types.YAML.YAMLAdapter;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PersistenceUser {
-    private Class<?> userClass;
     private String preferredName;
-    private HashMap<String, Class<?>> classMap;
     private ConcurrentHashMap<String, PersistenceObject> ownedObjects;
     private File directory;
     private Adapter adapter;
+    private Boolean enabled = false;
 
-    public PersistenceUser(Class<?> owner, String name) {
-        this.userClass = owner;
+    public PersistenceUser(String name) {
         this.preferredName = name;
         this.ownedObjects = new ConcurrentHashMap<String, PersistenceObject>();
-        this.classMap = new HashMap<String, Class<?>>();
         this.directory = new File(getProjectIdentifier());
         this.adapter = new YAMLAdapter();
+        //Register
+        registerUser(name);
     }
 
-    public PersistenceUser(Class<?> owner, String name, File directory, Adapter adapter) {
-        this.userClass = owner;
+    public PersistenceUser(String name, File directory, Adapter adapter) {
         this.preferredName = name;
         this.ownedObjects = new ConcurrentHashMap<String, PersistenceObject>();
-        this.classMap = new HashMap<String, Class<?>>();
         this.directory = directory;
         this.adapter = adapter;
+        //Register
+        registerUser(name);
     }
 
     public final void cycle() {
@@ -56,7 +54,7 @@ public class PersistenceUser {
             new Info(InfoType.Writing_File, Level.File).addMessage("Directory did not exist creating it now.").complete().send();
             if (!directory.mkdir()) new Error(ErrorType.Directory_Creation_Failed).addObject(this).complete().send();
         }
-        PersistenceManager.registerUser(identifier, this);
+        if (PersistenceManager.registerUser(identifier, this)) enabled = true;
     }
 
     public final void registerObject(String classID, String objectID, PersistenceObject object) {
@@ -75,20 +73,8 @@ public class PersistenceUser {
 
     }
 
-    public final HashMap<String, Class<?>> getClassMap() {
-        return classMap;
-    }
-
     public final ConcurrentHashMap<String, PersistenceObject> getOwnedObjects() {
         return ownedObjects;
-    }
-
-    public final Class<?> getUserClass() {
-        return userClass;
-    }
-
-    public void registerClass(String classID, Class<?> def) {
-        classMap.put(classID, def);
     }
 
     public final String getProjectIdentifier() {

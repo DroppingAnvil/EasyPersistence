@@ -9,29 +9,23 @@ public class PersistenceObject extends Identifier {
     private File file;
     private Boolean loaded = false;
     //Loading a previous OR creating new specific
-    public PersistenceObject(String classID, String objectID, PersistenceUser user, Object object) {
+    public PersistenceObject(String classID, String objectID, PersistenceUser user) {
         super(classID, objectID, user);
-        this.object = object;
         this.file = new File(new File(super.getUser().getDirectory(), super.getClassIdentifier()), super.getObjectIdentifier());
         maxCycles = 3;
         cycles = 3;
-        user.registerObject(classID, objectID, this);
     }
-    public PersistenceObject(String classID, String objectID, PersistenceUser user, Object object, Integer maxCycles, Integer cycles) {
+    public PersistenceObject(String classID, String objectID, PersistenceUser user, Integer maxCycles, Integer cycles) {
         super(classID, objectID, user);
-        this.object = object;
         this.file = new File(new File(super.getUser().getDirectory(), super.getClassIdentifier()), super.getObjectIdentifier());
         this.maxCycles = maxCycles;
         this.cycles = cycles;
-        user.registerObject(classID, objectID, this);
     }
-    public PersistenceObject(String classID, String objectID, PersistenceUser user, Object object, Integer maxCycles, Integer cycles, File file) {
+    public PersistenceObject(String classID, String objectID, PersistenceUser user, Integer maxCycles, Integer cycles, File file) {
         super(classID, objectID, user);
-        this.object = object;
         this.file = file;
         this.maxCycles = maxCycles;
         this.cycles = cycles;
-        user.registerObject(classID, objectID, this);
     }
     public File getFile() {
         return file;
@@ -59,6 +53,10 @@ public class PersistenceObject extends Identifier {
     }
     public Boolean getLoaded() {
         return loaded;
+    }
+    public void setObject(Object o) {
+        this.object = o;
+        getUser().registerObject(getClassIdentifier(), getObjectIdentifier(), this);
     }
 
 }
