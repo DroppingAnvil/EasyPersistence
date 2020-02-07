@@ -17,6 +17,8 @@ public class EditField extends Verifier implements Action {
         if (pU == null) return Invalids.INVALID_PROJECT.name();
         PersistenceObject pO = pU.getOwnedObjects().get(sData[2]);
         if (pO == null) return Invalids.INVALID_OBJECT.name();
-        return null;
+        if (sData[3] == null || sData[4] == null) return Invalids.INVALID_ARGS.name();
+        pO.getRemoteEdits().put(sData[3], sData[4]);
+        return toClient.stringify(Operations.EDIT_FIELD.name(), sData[1], sData[2], "1", "None");
     }
 }

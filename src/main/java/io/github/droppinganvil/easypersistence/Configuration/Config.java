@@ -16,7 +16,7 @@ public class Config extends PersistenceObject {
         setObject(this);
     }
     public static Integer port = 30;
-    public static Integer wait = 10;
+    public static Long wait = 10L;
     public static Boolean addressWhitelist = false;
     public static List<String> addressList = new ArrayList<String>(Collections.singleton("127.0. 0.1"));
     public static String key = "Please change me! " + new Random().nextInt(1000000);

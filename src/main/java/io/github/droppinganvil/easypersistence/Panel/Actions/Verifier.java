@@ -4,8 +4,12 @@ import io.github.droppinganvil.easypersistence.Configuration.Config;
 
 public class Verifier {
     public boolean verify(String[] strings, Integer i) {
-        if (strings.length != i) return false;
-        if (!strings[i - 1].equals(Config.key)) return false;
-        return true;
+        //So we dont leave the client hanging if there is an issue
+        try {
+            if (strings.length != i) return false;
+            return strings[i - 1].equals(Config.key);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

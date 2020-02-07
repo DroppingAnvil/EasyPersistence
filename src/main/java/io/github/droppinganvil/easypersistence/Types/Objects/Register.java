@@ -12,6 +12,7 @@ public class Register {
         register(new PersistentBoolean());
         register(new PersistentDouble());
         register(new PersistentCollection());
+        register(new PersistentLong());
     }
     public static void register(Buildable b) {
         ObjectTypes.buildables.put(b.getObjectClass(), b);
