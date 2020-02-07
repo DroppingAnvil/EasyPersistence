@@ -1,11 +1,14 @@
 package io.github.droppinganvil.easypersistence.Types;
 
 
+import io.github.droppinganvil.easypersistence.Configuration.Config;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.ErrorType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
 import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
+import io.github.droppinganvil.easypersistence.PersistenceObject;
+import io.github.droppinganvil.easypersistence.Types.Objects.Adapter;
 import io.github.droppinganvil.easypersistence.Types.Objects.Buildable;
 import io.github.droppinganvil.easypersistence.Types.Objects.ObjectTypes;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.LoadedObject;
@@ -16,6 +19,7 @@ import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 public class TypeAdapter {
 
@@ -144,6 +148,40 @@ public class TypeAdapter {
 
     private void setField(Field field, Object o, LoadedObject loadedObject) throws IllegalAccessException {
         field.set(o, loadedObject.getObject());
+    }
+    public void loadEdits(PersistenceObject o, Adapter a) {
+        for (Map.Entry<String, String> entry : o.getRemoteEdits().entrySet()) {
+            try {
+                Field f =  o.getObject().getClass().getField(entry.getKey());
+                Object lo = getLoadedObject(entry.getValue(), f);
+                if (!(lo instanceof Error)) {
+                    if (lo == null && Config.safeEdit) {
+                        Error error = new Error(ErrorType.Null_Object)
+                                .addMessage("Could not load object successfully for field '" + entry.getKey() + "' using '" + entry.getValue()
+                                        + "' on '" + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier()
+                                        + "' if it was intended to set to null please disable safeEdit in config.").complete();
+                        a.getErrorMap().put(error, false);
+                        error.send();
+                    } else {
+                        f.set(o.getObject(), ((LoadedObject) lo).getObject());
+                    }
+                } else {
+                    a.getErrorMap().put((Error) lo, false);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+                Error error = new Error(ErrorType.Issue_Generic).addMessage("Could not set field '" + entry.getKey() + "' on PersistenceObject " + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier()).complete();
+                a.getErrorMap().put(error, false);
+                error.send();
+                a.getExceptionMap().put(e, false);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+                Error error = new Error(ErrorType.No_Field).addMessage("Could not find field '" + entry.getKey() + "' on PersistenceObject " + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier()).complete();
+                a.getErrorMap().put(error, false);
+                error.send();
+                a.getExceptionMap().put(e, false);
+            }
+        }
     }
 
 }

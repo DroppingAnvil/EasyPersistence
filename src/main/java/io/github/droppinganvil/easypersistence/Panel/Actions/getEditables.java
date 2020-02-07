@@ -10,15 +10,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class getEditables extends Verifier implements Action{
-    //TODO try cast too
-    //TODO Support complex
+    //TODO try cast too, support complex
     public String getAction() {
-        return "GET_EDITABLES";
+        return Operations.GET_EDITABLES.name();
     }
 
     public String parse(String data) {
         String[] sData = data.split("@");
-        if (!verify(sData)) return Invalids.INVALID.name();
+        if (!verify(sData, 5)) return Invalids.INVALID.name();
         PersistenceUser pU = PersistenceManager.getUser(sData[1]);
         if (pU == null) return Invalids.INVALID_PROJECT.name();
         PersistenceObject pO = pU.getOwnedObjects().get(sData[2] + "_" + sData[3]);
@@ -39,9 +38,6 @@ public class getEditables extends Verifier implements Action{
             //Chained looks ridiculous lol
             sb.append(" {").append(e.getKey()).append(",").append(e.getValue()).append("}");
         }
-
-
-        
-        return null;
+        return toClient.stringify(getAction(), sData[1], sData[2] + "_" + sData[3], sb.toString(), "None");
     }
 }

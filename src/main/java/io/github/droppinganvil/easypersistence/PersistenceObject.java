@@ -1,6 +1,7 @@
 package io.github.droppinganvil.easypersistence;
 
 import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PersistenceObject extends Identifier {
     private Object object;
@@ -8,6 +9,7 @@ public class PersistenceObject extends Identifier {
     private Integer cycles;
     private File file;
     private Boolean loaded = false;
+    private ConcurrentHashMap<String, String> edits = new ConcurrentHashMap<String, String>();
     //Loading a previous OR creating new specific
     public PersistenceObject(String classID, String objectID, PersistenceUser user) {
         super(classID, objectID, user);
@@ -57,6 +59,9 @@ public class PersistenceObject extends Identifier {
     public void setObject(Object o) {
         this.object = o;
         getUser().registerObject(getClassIdentifier(), getObjectIdentifier(), this);
+    }
+    public ConcurrentHashMap<String, String> getRemoteEdits() {
+        return edits;
     }
 
 }

@@ -1,5 +1,6 @@
 package io.github.droppinganvil.easypersistence.Types.YAML;
 
+import io.github.droppinganvil.easypersistence.Configuration.Config;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.ErrorType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
@@ -18,7 +19,7 @@ import java.io.FileWriter;
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-
+//TODO Move most of this adapters code to type adapter as most is non specific to YAML
 public class YAMLAdapter extends TypeAdapter implements Adapter {
     private State state;
     private String s;
@@ -131,6 +132,10 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
         changeState(State.Idle, null);
     }
 
+    public void loadEdits(PersistenceObject o) {
+        loadEdits(o, this);
+    }
+
     public Status getStatus() {
         return new Status(state, s);
     }
@@ -149,6 +154,15 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
             }
         }
     }
+
+    public ConcurrentHashMap<Error, Boolean> getErrorMap() {
+        return errors;
+    }
+
+    public ConcurrentHashMap<Exception, Boolean> getExceptionMap() {
+        return exceptions;
+    }
+
     private void changeState(State state, Object obj) {
         this.state = state;
         //Pass on obj (Error, Exception or null)
