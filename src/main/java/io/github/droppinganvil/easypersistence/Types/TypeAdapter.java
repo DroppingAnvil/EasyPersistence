@@ -35,7 +35,7 @@ public class TypeAdapter {
         }
     }
     public Response locate(Object o, HashMap<Class<?>, ?> map, Boolean complex) {
-        if (map.containsKey(o.getClass())) return new Response(Precision.Exact, map.get(o.getClass()).getClass(), complex);
+        if (map.containsKey(o.getClass())) return new Response(Precision.Exact, o.getClass(), complex);
         for (Class<?> c : map.keySet()) {
             if (canCast(c, o)) {
                 return new Response(Precision.Cast, c, complex);
@@ -45,7 +45,7 @@ public class TypeAdapter {
     }
 
     public Error load(Object targetMain, Object target, Field field) throws IllegalAccessException {
-        Object o = getLoadedObject(target, field);
+        Object o = getLoadedObject(target, field, field.get(target));
         if (o instanceof Error) return (Error) o;
             setField(field, targetMain, (LoadedObject) o);
             return null;
@@ -114,8 +114,8 @@ public class TypeAdapter {
         return new SaveData(ObjectTypes.buildables.get(response.getTargetClass()).getSaveData(o));
     }
     //Give collection or string from disk as o
-    public Object getLoadedObject(Object o, Field field) {
-        Object obj = locate(o);
+    public Object getLoadedObject(Object o, Field field, Object def) {
+        Object obj = locate(def);
         if (obj instanceof Error) return obj;
         Response response = (Response) obj;
         if (response.isComplex()) {
@@ -153,7 +153,7 @@ public class TypeAdapter {
         for (Map.Entry<String, String> entry : o.getRemoteEdits().entrySet()) {
             try {
                 Field f =  o.getObject().getClass().getField(entry.getKey());
-                Object lo = getLoadedObject(entry.getValue(), f);
+                Object lo = getLoadedObject(entry.getValue(), f, f.get(o.getObject()));
                 if (!(lo instanceof Error)) {
                     if (lo == null && Config.safeEdit) {
                         Error error = new Error(ErrorType.Null_Object)

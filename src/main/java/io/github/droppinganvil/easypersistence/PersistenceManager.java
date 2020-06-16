@@ -7,12 +7,11 @@ import io.github.droppinganvil.easypersistence.Notifications.Info.InfoType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Level;
 import io.github.droppinganvil.easypersistence.Types.Objects.Register;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PersistenceManager {
-    private final static ConcurrentHashMap<String, PersistenceUser> identifierMap = new ConcurrentHashMap<String, PersistenceUser>();
+    private static ConcurrentHashMap<String, PersistenceUser> identifierMap = new ConcurrentHashMap<String, PersistenceUser>();
 
     public static PersistenceUser getUser(String s) {
         return identifierMap.get(s);
@@ -47,5 +46,9 @@ public class PersistenceManager {
     }
     public static void load() {
         Register.defaults();
+    }
+
+    public static Collection<PersistenceUser> getUsers() {
+        return identifierMap.values();
     }
 }

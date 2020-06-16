@@ -63,5 +63,13 @@ public class PersistenceObject extends Identifier {
     public ConcurrentHashMap<String, String> getRemoteEdits() {
         return edits;
     }
+    public void checkDirectory() {
+        //TODO error catching
+        if (!file.exists()) {
+            File classDir = new File(super.getProjectIdentifier(), getClassIdentifier());
+            if (!classDir.exists()) classDir.mkdir();
+        }
+    }
+
 
 }

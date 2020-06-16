@@ -26,7 +26,7 @@ public class SocketWatcher implements Runnable {
             } catch (IOException ignored) {}
             if (Config.wait != 0) {
                 try {
-                    wait(Config.wait);
+                    Thread.sleep(Config.wait);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

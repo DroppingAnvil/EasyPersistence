@@ -1,5 +1,6 @@
 package io.github.droppinganvil.easypersistence;
 
+import io.github.droppinganvil.easypersistence.Configuration.Config;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.ErrorType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
@@ -40,10 +41,13 @@ public class PersistenceUser {
         for (PersistenceObject po : ownedObjects.values()) {
             if (po.cycle()) {
                 if (po.getLoaded()) {
+                    po.checkDirectory();
                     adapter.saveObject(po);
                 } else {
+                    po.checkDirectory();
                     adapter.loadObject(po);
                     po.setLoaded();
+                    System.out.print(Config.port);
                 }
             }
         }

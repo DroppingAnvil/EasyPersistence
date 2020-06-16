@@ -1,5 +1,6 @@
 package io.github.droppinganvil.easypersistence.Configuration;
 
+import io.github.droppinganvil.easypersistence.PersistenceManager;
 import io.github.droppinganvil.easypersistence.PersistenceUser;
 
 public class User extends PersistenceUser {
@@ -8,8 +9,9 @@ public class User extends PersistenceUser {
         return instance;
     }
     public User() {
-        super("EasyPersistence");
+        super("EasyPersistence-Beta");
         if (instance == null) instance = this;
+        PersistenceManager.registerUser("EasyPersistence-Beta", this);
     }
 
 }

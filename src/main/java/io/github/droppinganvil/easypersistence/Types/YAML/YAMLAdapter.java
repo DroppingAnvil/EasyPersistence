@@ -17,6 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 //TODO Move most of this adapters code to type adapter as most is non specific to YAML
@@ -41,8 +42,9 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                     errors.put(error, false);
                     error.send();
                     changeState(State.Issue, error);
-                    return;
                 }
+                //Nothing to read
+                return;
             }
                 changeState(State.Read, null);
                 LinkedHashMap<String, Object> root = yaml.load(new FileInputStream(o.getFile()));
@@ -97,16 +99,12 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                     return;
                 }
             }
-            changeState(State.Read, null);
-            LinkedHashMap<String, Object> data = yaml.load(new FileInputStream(o.getFile()));
+            changeState(State.Write, null);
+            LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
             for (Field field : o.getObject().getClass().getDeclaredFields()) {
-                if (field.isAccessible()) {
                     Object obj = getSaveData(field.get(o.getObject()), field);
                     if (!(obj instanceof Error)) {
                         if (((SaveData) obj).getData() != null) {
-                            if (data.containsKey(field.getName())) {
-                                data.remove(field.getName());
-                            }
                             data.put(field.getName(), ((SaveData) obj).getData());
                         } else {
                             Error error = new Error(ErrorType.Null_Object).addObject(obj)
@@ -120,7 +118,6 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                         errors.put((Error) obj, false);
                         changeState(State.Issue, obj);
                     }
-            }
             }
             FileWriter writer = new FileWriter(o.getFile());
             yaml.dump(data, writer);
