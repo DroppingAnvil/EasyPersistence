@@ -47,7 +47,6 @@ public class PersistenceUser {
                     po.checkDirectory();
                     adapter.loadObject(po);
                     po.setLoaded();
-                    System.out.print(Config.port);
                 }
             }
         }
