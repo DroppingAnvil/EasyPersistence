@@ -2,7 +2,6 @@ package io.github.droppinganvil.easypersistence.Configuration;
 
 import io.github.droppinganvil.easypersistence.PersistenceObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +15,7 @@ public class Config extends PersistenceObject {
         super("Configurations", "Config", User.getInstance(), 100, 0);
         setObject(this);
     }
+    
     public static Integer port = 30;
     public static Long wait = 10L;
     public static Boolean addressWhitelist = false;

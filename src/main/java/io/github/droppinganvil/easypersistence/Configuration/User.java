@@ -11,7 +11,7 @@ public class User extends PersistenceUser {
     public User() {
         super("EasyPersistence-Beta");
         if (instance == null) instance = this;
-        PersistenceManager.registerUser("EasyPersistence-Beta", this);
+        PersistenceManager.registerUser(instance.getProjectIdentifier(), this);
     }
 
 }
