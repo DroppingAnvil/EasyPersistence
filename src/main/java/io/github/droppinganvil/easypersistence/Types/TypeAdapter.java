@@ -155,7 +155,7 @@ public class TypeAdapter {
                 Field f =  o.getObject().getClass().getField(entry.getKey());
                 Object lo = getLoadedObject(entry.getValue(), f, f.get(o.getObject()));
                 if (!(lo instanceof Error)) {
-                    if (lo == null && Config.safeEdit) {
+                    if (((LoadedObject) lo).getObject() == null && Config.safeEdit) {
                         Error error = new Error(ErrorType.Null_Object)
                                 .addMessage("Could not load object successfully for field '" + entry.getKey() + "' using '" + entry.getValue()
                                         + "' on '" + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier()

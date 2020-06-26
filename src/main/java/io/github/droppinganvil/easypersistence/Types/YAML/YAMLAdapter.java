@@ -17,7 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.lang.reflect.Modifier;
 import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 //TODO Move most of this adapters code to type adapter as most is non specific to YAML
@@ -102,6 +102,7 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
             changeState(State.Write, null);
             LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
             for (Field field : o.getObject().getClass().getDeclaredFields()) {
+                if (Modifier.isPublic(field.getModifiers())) {
                     Object obj = getSaveData(field.get(o.getObject()), field);
                     if (!(obj instanceof Error)) {
                         if (((SaveData) obj).getData() != null) {
@@ -118,6 +119,7 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                         errors.put((Error) obj, false);
                         changeState(State.Issue, obj);
                     }
+                }
             }
             FileWriter writer = new FileWriter(o.getFile());
             yaml.dump(data, writer);
