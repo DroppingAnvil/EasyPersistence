@@ -159,7 +159,10 @@ public class TypeAdapter {
                         Error error = new Error(ErrorType.Null_Object)
                                 .addMessage("Could not load object successfully for field '" + entry.getKey() + "' using '" + entry.getValue()
                                         + "' on '" + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier()
-                                        + "' if it was intended to set to null please disable safeEdit in config.").complete();
+                                        + "' if it was intended to set to null please disable safeEdit in config.")
+                                .addUser(o.getUser())
+                                .addObject(o)
+                                .complete();
                         a.getErrorMap().put(error, false);
                         error.send();
                     } else {
@@ -170,13 +173,19 @@ public class TypeAdapter {
                 }
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                Error error = new Error(ErrorType.Issue_Generic).addMessage("Could not set field '" + entry.getKey() + "' on PersistenceObject " + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier()).complete();
+                Error error = new Error(ErrorType.Issue_Generic).addMessage("Could not set field '" + entry.getKey() + "' on PersistenceObject " + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier())
+                        .addUser(o.getUser())
+                        .addObject(o)
+                        .complete();
                 a.getErrorMap().put(error, false);
                 error.send();
                 a.getExceptionMap().put(e, false);
             } catch (NoSuchFieldException e) {
                 e.printStackTrace();
-                Error error = new Error(ErrorType.No_Field).addMessage("Could not find field '" + entry.getKey() + "' on PersistenceObject " + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier()).complete();
+                Error error = new Error(ErrorType.No_Field).addMessage("Could not find field '" + entry.getKey() + "' on PersistenceObject " + o.getProjectIdentifier() + " " + o.getClassIdentifier() + "_" + o.getObjectIdentifier())
+                        .addUser(o.getUser())
+                        .addObject(o)
+                        .complete();
                 a.getErrorMap().put(error, false);
                 error.send();
                 a.getExceptionMap().put(e, false);
