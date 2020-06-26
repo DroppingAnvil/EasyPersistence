@@ -79,4 +79,7 @@ public class Error {
         }
         return false;
     }
+    public Object getObject() {
+        return subject;
+    }
 }
