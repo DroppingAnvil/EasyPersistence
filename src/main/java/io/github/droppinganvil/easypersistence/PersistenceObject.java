@@ -9,6 +9,7 @@ public class PersistenceObject extends Identifier {
     private Integer cycles;
     private File file;
     private Boolean loaded = false;
+    private Boolean erase = false;
     private ConcurrentHashMap<String, String> edits = new ConcurrentHashMap<String, String>();
     //Loading a previous OR creating new specific
     public PersistenceObject(String classID, String objectID, PersistenceUser user) {
@@ -70,10 +71,20 @@ public class PersistenceObject extends Identifier {
             if (!classDir.exists()) classDir.mkdir();
         }
     }
+
+    public boolean getDelete() {
+        return erase;
+    }
     public void loadNow() {
         if (getLoaded()) return;
         super.getUser().getAdapter().loadObject(this);
         setLoaded();
+    }
+
+    public void delete() {
+        erase = true;
+        file.delete();
+        super.getUser().getOwnedObjects().remove(super.getClassIdentifier() + "_" + super.getObjectIdentifier());
     }
 
 

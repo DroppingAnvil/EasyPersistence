@@ -40,13 +40,15 @@ public class PersistenceUser {
     public final void cycle() {
         for (PersistenceObject po : ownedObjects.values()) {
             if (po.cycle()) {
-                if (po.getLoaded()) {
-                    po.checkDirectory();
-                    adapter.saveObject(po);
-                } else {
-                    po.checkDirectory();
-                    adapter.loadObject(po);
-                    po.setLoaded();
+                if (!po.getDelete()) {
+                    if (po.getLoaded()) {
+                        po.checkDirectory();
+                        adapter.saveObject(po);
+                    } else {
+                        po.checkDirectory();
+                        adapter.loadObject(po);
+                        po.setLoaded();
+                    }
                 }
             }
         }
