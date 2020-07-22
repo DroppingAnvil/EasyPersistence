@@ -70,6 +70,11 @@ public class PersistenceObject extends Identifier {
             if (!classDir.exists()) classDir.mkdir();
         }
     }
+    public void loadNow() {
+        if (getLoaded()) return;
+        super.getUser().getAdapter().loadObject(this);
+        setLoaded();
+    }
 
 
 }
