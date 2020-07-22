@@ -15,7 +15,6 @@ public class Config extends PersistenceObject {
         super("Configurations", "Config", User.getInstance(), 100, 0);
         setObject(this);
     }
-    
     public static Integer port = 30;
     public static Long wait = 10L;
     public static Boolean addressWhitelist = false;

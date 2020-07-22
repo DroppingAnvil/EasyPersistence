@@ -107,7 +107,7 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
             LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
             for (Field field : o.getObject().getClass().getDeclaredFields()) {
                 if (Modifier.isPublic(field.getModifiers())) {
-                    if (AnnotationUtil.shouldSaveObject(field)) {
+                    if (AnnotationUtil.shouldSaveObject(field) && (field.get(o.getObject()) != null || AnnotationUtil.saveNull(field))) {
                         Object obj = getSaveData(field.get(o.getObject()), field);
                         if (!(obj instanceof Error)) {
                             if (((SaveData) obj).getData() != null) {
