@@ -44,6 +44,16 @@ public class TypeAdapter {
         return new Response(Precision.None, null, complex);
     }
 
+    public Response locate(Class<?> clazz, HashMap<Class<?>, ?> map, Boolean complex) {
+        if (map.containsKey(clazz)) return new Response(Precision.Exact, clazz, complex);
+        for (Class<?> c : map.keySet()) {
+            if (canCast(c, clazz)) {
+                return new Response(Precision.Cast, c, complex);
+            }
+        }
+        return new Response(Precision.None, null, complex);
+    }
+
     public Error load(Object targetMain, Object parserValue, Field field) throws IllegalAccessException {
         Object loadedOrError = getLoadedObject(parserValue, field, field.get(targetMain));
         if (loadedOrError instanceof Error) return (Error) loadedOrError;
@@ -130,6 +140,17 @@ public class TypeAdapter {
         );
 
     }
+    //Strictly for Buildables NO COMPLEX
+    public Object getLoadedObject(Object parserVal, Class<?> clazz) {
+        Object locateResult = locate((Class<?>) clazz);
+        if (locateResult instanceof Error) return locateResult;
+        Response response = (Response) locateResult;
+        return new LoadedObject(
+                ObjectTypes.buildables.get(response.getTargetClass()).build((String) parserVal),
+                ObjectTypes.buildables.get(response.getTargetClass())
+        );
+
+    }
 
     private Object locate(Object o) {
         Response simple = locate(o, ObjectTypes.buildables, false);
@@ -146,8 +167,22 @@ public class TypeAdapter {
         }
     }
 
-    private void setField(Field field, Object targetObj, LoadedObject loadedObject) throws IllegalAccessException {
+    private Object locate(Class<?> clazz) {
+        Response simple = locate((Class<?>) clazz, ObjectTypes.buildables, false);
+        Response complexx = locate((Class<?>) clazz, ObjectTypes.complexBuildables, true);
+        if (simple.getPrecision() == Precision.None && complexx.getPrecision() == Precision.None) {
+            return new Error(ErrorType.Non_Buildable_Object).addObject(clazz)
+                    .addMessage("A builder could not be found for Class '" + clazz + "' in package " + clazz.getPackage().getName())
+                    .complete();
+        }
+        if (simple.getPrecision().i() >= complexx.getPrecision().i()) {
+            return simple;
+        } else {
+            return complexx;
+        }
+    }
 
+    private void setField(Field field, Object targetObj, LoadedObject loadedObject) throws IllegalAccessException {
         field.set(targetObj, loadedObject.getObject());
     }
     public void loadEdits(PersistenceObject o, Adapter a) {
