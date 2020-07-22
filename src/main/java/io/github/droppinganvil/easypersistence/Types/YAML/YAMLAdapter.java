@@ -1,6 +1,5 @@
 package io.github.droppinganvil.easypersistence.Types.YAML;
 
-import io.github.droppinganvil.easypersistence.Configuration.Config;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.Error;
 import io.github.droppinganvil.easypersistence.Notifications.ErrorHandling.ErrorType;
 import io.github.droppinganvil.easypersistence.Notifications.Info.Info;
@@ -11,6 +10,7 @@ import io.github.droppinganvil.easypersistence.Types.Objects.Adapter;
 import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
 import io.github.droppinganvil.easypersistence.Types.Objects.Status.State;
 import io.github.droppinganvil.easypersistence.Types.Objects.Status.Status;
+import io.github.droppinganvil.easypersistence.Types.Objects.annotations.AnnotationUtil;
 import io.github.droppinganvil.easypersistence.Types.TypeAdapter;
 import org.yaml.snakeyaml.Yaml;
 
@@ -30,15 +30,15 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
     public YAMLAdapter() {
     }
 
-    public void loadObject(PersistenceObject o) {
+    public void loadObject(PersistenceObject persistenceObject) {
         try {
             changeState(State.Read, null);
-            s = o.getFile().getPath();
-            if (!o.getFile().exists()) {
-                new Info(InfoType.Writing_File, Level.File).addMessage("File did not exist.").addUser(o.getUser()).complete().send();
+            s = persistenceObject.getFile().getPath();
+            if (!persistenceObject.getFile().exists()) {
+                new Info(InfoType.Writing_File, Level.File).addMessage("File did not exist.").addUser(persistenceObject.getUser()).complete().send();
                 changeState(State.Write, null);
-                if (!o.getFile().createNewFile()) {
-                    Error error = new Error(ErrorType.File_Unknown).addUser(o.getUser()).complete();
+                if (!persistenceObject.getFile().createNewFile()) {
+                    Error error = new Error(ErrorType.File_Unknown).addUser(persistenceObject.getUser()).complete();
                     errors.put(error, false);
                     error.send();
                     changeState(State.Issue, error);
@@ -47,24 +47,28 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
                 return;
             }
                 changeState(State.Read, null);
-                LinkedHashMap<String, Object> root = yaml.load(new FileInputStream(o.getFile()));
-                for (String field : root.keySet()) {
-                    Object ob = root.get(field);
-                    Field f = null;
+                LinkedHashMap<String, Object> root = yaml.load(new FileInputStream(persistenceObject.getFile()));
+                /*
+                While we could parse the class and have greater speed we would run into issues with other versions of the class,
+                parsing from the file allows it to load in any previous version and work its way up to the new version while saving
+                 */
+                for (String fieldKey : root.keySet()) {
+                    Object yamlValue = root.get(fieldKey);
+                    Field field = null;
                     try {
-                        f = o.getObject().getClass().getField(field);
+                        field = persistenceObject.getObject().getClass().getField(fieldKey);
                     } catch (NoSuchFieldException ex) {
                         ex.printStackTrace();
                         Error error = new Error(ErrorType.No_Field)
-                                .addMessage("A field with the name " + field + " could not be found")
-                                .addUser(o.getUser()).complete();
+                                .addMessage("A field with the name " + fieldKey + " could not be found")
+                                .addUser(persistenceObject.getUser()).complete();
                         errors.put(error, false);
                         error.send();
                         changeState(State.Issue, error);
                     }
-                    if (f != null) {
+                    if (field != null) {
                         try {
-                            Error error = load(o.getObject(), ob, f);
+                            Error error = load(persistenceObject.getObject(), yamlValue, field);
                             if (error != null) {
                                 errors.put(error, false);
                                 error.send();
@@ -103,21 +107,23 @@ public class YAMLAdapter extends TypeAdapter implements Adapter {
             LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
             for (Field field : o.getObject().getClass().getDeclaredFields()) {
                 if (Modifier.isPublic(field.getModifiers())) {
-                    Object obj = getSaveData(field.get(o.getObject()), field);
-                    if (!(obj instanceof Error)) {
-                        if (((SaveData) obj).getData() != null) {
-                            data.put(field.getName(), ((SaveData) obj).getData());
+                    if (AnnotationUtil.shouldSaveObject(field)) {
+                        Object obj = getSaveData(field.get(o.getObject()), field);
+                        if (!(obj instanceof Error)) {
+                            if (((SaveData) obj).getData() != null) {
+                                data.put(field.getName(), ((SaveData) obj).getData());
+                            } else {
+                                Error error = new Error(ErrorType.Null_Object).addObject(obj)
+                                        .addMessage("Data for field '" + field.getName() + "' on '" + o.getObject().getClass().getName() + "' came back null")
+                                        .complete();
+                                errors.put(error, false);
+                                error.send();
+                                changeState(State.Issue, error);
+                            }
                         } else {
-                            Error error = new Error(ErrorType.Null_Object).addObject(obj)
-                                    .addMessage("Data for field '" + field.getName() + "' on '" + o.getObject().getClass().getName() + "' came back null")
-                                    .complete();
-                            errors.put(error, false);
-                            error.send();
-                            changeState(State.Issue, error);
+                            errors.put((Error) obj, false);
+                            changeState(State.Issue, obj);
                         }
-                    } else {
-                        errors.put((Error) obj, false);
-                        changeState(State.Issue, obj);
                     }
                 }
             }

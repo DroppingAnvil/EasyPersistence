@@ -44,10 +44,10 @@ public class TypeAdapter {
         return new Response(Precision.None, null, complex);
     }
 
-    public Error load(Object targetMain, Object target, Field field) throws IllegalAccessException {
-        Object o = getLoadedObject(target, field, field.get(target));
-        if (o instanceof Error) return (Error) o;
-            setField(field, targetMain, (LoadedObject) o);
+    public Error load(Object targetMain, Object parserValue, Field field) throws IllegalAccessException {
+        Object loadedOrError = getLoadedObject(parserValue, field, field.get(targetMain));
+        if (loadedOrError instanceof Error) return (Error) loadedOrError;
+            setField(field, targetMain, (LoadedObject) loadedOrError);
             return null;
     }
 
@@ -114,18 +114,18 @@ public class TypeAdapter {
         return new SaveData(ObjectTypes.buildables.get(response.getTargetClass()).getSaveData(o));
     }
     //Give collection or string from disk as o
-    public Object getLoadedObject(Object o, Field field, Object def) {
-        Object obj = locate(def);
-        if (obj instanceof Error) return obj;
-        Response response = (Response) obj;
+    public Object getLoadedObject(Object parserVal, Field field, Object fieldVal) {
+        Object locateResult = locate(fieldVal);
+        if (locateResult instanceof Error) return locateResult;
+        Response response = (Response) locateResult;
         if (response.isComplex()) {
             return new LoadedObject(
-                    ObjectTypes.complexBuildables.get(response.getTargetClass()).build((Collection<String>) o, o, field, this),
+                    ObjectTypes.complexBuildables.get(response.getTargetClass()).build((Collection<String>) parserVal, parserVal, field, this),
                     ObjectTypes.complexBuildables.get(response.getTargetClass())
             );
         }
         return new LoadedObject(
-                ObjectTypes.buildables.get(response.getTargetClass()).build((String) o),
+                ObjectTypes.buildables.get(response.getTargetClass()).build((String) parserVal),
                 ObjectTypes.buildables.get(response.getTargetClass())
         );
 
@@ -146,8 +146,9 @@ public class TypeAdapter {
         }
     }
 
-    private void setField(Field field, Object o, LoadedObject loadedObject) throws IllegalAccessException {
-        field.set(o, loadedObject.getObject());
+    private void setField(Field field, Object targetObj, LoadedObject loadedObject) throws IllegalAccessException {
+
+        field.set(targetObj, loadedObject.getObject());
     }
     public void loadEdits(PersistenceObject o, Adapter a) {
         for (Map.Entry<String, String> entry : o.getRemoteEdits().entrySet()) {
