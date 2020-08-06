@@ -16,7 +16,6 @@ import java.util.Collection;
 public interface ComplexBuildable {
 
     Class<?> getObjectClass();
-    //TODO Accept Map<String, String>
     Collection<String> getSaveData(Object o, Field field, TypeAdapter ta);
 
     /**
