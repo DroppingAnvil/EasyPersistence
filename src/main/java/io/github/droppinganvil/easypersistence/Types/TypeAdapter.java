@@ -172,10 +172,12 @@ public class TypeAdapter {
                     .addMessage("A builder could not be found for Object '" + o.getClass().getName() + "' in package " + o.getClass().getPackage().getName())
                     .complete();
         }
-        if (simple.getPrecision().i() >= complexx.getPrecision().i()) {
-            return simple;
-        } else {
+        if (mapped.getPrecision().i() >= complexx.getPrecision().i()) {
+            return mapped;
+        } else if (complexx.getPrecision().i() >= simple.getPrecision().i()){
             return complexx;
+        } else {
+            return simple;
         }
     }
 
@@ -188,10 +190,12 @@ public class TypeAdapter {
                     .addMessage("A builder could not be found for Class '" + clazz + "' in package " + clazz.getPackage().getName())
                     .complete();
         }
-        if (simple.getPrecision().i() >= complexx.getPrecision().i()) {
-            return simple;
-        } else {
+        if (mapped.getPrecision().i() >= complexx.getPrecision().i()) {
+            return mapped;
+        } else if (complexx.getPrecision().i() >= simple.getPrecision().i()){
             return complexx;
+        } else {
+            return simple;
         }
     }
 
