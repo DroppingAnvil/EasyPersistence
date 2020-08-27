@@ -11,10 +11,7 @@ import io.github.droppinganvil.easypersistence.PersistenceObject;
 import io.github.droppinganvil.easypersistence.Types.Objects.Adapter;
 import io.github.droppinganvil.easypersistence.Types.Objects.Buildable;
 import io.github.droppinganvil.easypersistence.Types.Objects.ObjectTypes;
-import io.github.droppinganvil.easypersistence.Types.Objects.Response.LoadedObject;
-import io.github.droppinganvil.easypersistence.Types.Objects.Response.Precision;
-import io.github.droppinganvil.easypersistence.Types.Objects.Response.Response;
-import io.github.droppinganvil.easypersistence.Types.Objects.Response.SaveData;
+import io.github.droppinganvil.easypersistence.Types.Objects.Response.*;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -34,24 +31,24 @@ public class TypeAdapter {
             return false;
         }
     }
-    public Response locate(Object o, HashMap<Class<?>, ?> map, Boolean complex) {
-        if (map.containsKey(o.getClass())) return new Response(Precision.Exact, o.getClass(), complex);
+    public Response locate(Object o, HashMap<Class<?>, ?> map, Type type) {
+        if (map.containsKey(o.getClass())) return new Response(Precision.Exact, o.getClass(), type);
         for (Class<?> c : map.keySet()) {
             if (canCast(c, o)) {
-                return new Response(Precision.Cast, c, complex);
+                return new Response(Precision.Cast, c, type);
             }
         }
-        return new Response(Precision.None, null, complex);
+        return new Response(Precision.None, null, type);
     }
 
-    public Response locate(Class<?> clazz, HashMap<Class<?>, ?> map, Boolean complex) {
-        if (map.containsKey(clazz)) return new Response(Precision.Exact, clazz, complex);
+    public Response locate(Class<?> clazz, HashMap<Class<?>, ?> map, Type type) {
+        if (map.containsKey(clazz)) return new Response(Precision.Exact, clazz, type);
         for (Class<?> c : map.keySet()) {
             if (canCast(c, clazz)) {
-                return new Response(Precision.Cast, c, complex);
+                return new Response(Precision.Cast, c, type);
             }
         }
-        return new Response(Precision.None, null, complex);
+        return new Response(Precision.None, null, type);
     }
 
     public Error load(Object targetMain, Object parserValue, Field field) throws IllegalAccessException {
@@ -118,43 +115,58 @@ public class TypeAdapter {
         Object obj = locate(o);
         if (obj instanceof Error) return obj;
         Response response = (Response) obj;
-        if (response.isComplex()) {
-            return new SaveData(ObjectTypes.complexBuildables.get(response.getTargetClass()).getSaveData(o, field, this));
+        switch (response.getType()) {
+            case Simple: return new SaveData(ObjectTypes.buildables.get(response.getTargetClass()).getSaveData(o));
+            case Complex: return new SaveData(ObjectTypes.complexBuildables.get(response.getTargetClass()).getSaveData(o, field, this));
+            case Mapped: return new SaveData(ObjectTypes.mappedBuildables.get(response.getTargetClass()).getSaveData(o, field, this));
         }
-        return new SaveData(ObjectTypes.buildables.get(response.getTargetClass()).getSaveData(o));
+        return null;
     }
     //Give collection or string from disk as o
     public Object getLoadedObject(Object parserVal, Field field, Object fieldVal) {
         Object locateResult = locate(fieldVal);
         if (locateResult instanceof Error) return locateResult;
         Response response = (Response) locateResult;
-        if (response.isComplex()) {
-            return new LoadedObject(
+        switch (response.getType()) {
+            case Simple:         return new LoadedObject(
+                    ObjectTypes.buildables.get(response.getTargetClass()).build((String) parserVal),
+                    ObjectTypes.buildables.get(response.getTargetClass()));
+            case Complex:            return new LoadedObject(
                     ObjectTypes.complexBuildables.get(response.getTargetClass()).build((Collection<String>) parserVal, parserVal, field, this),
                     ObjectTypes.complexBuildables.get(response.getTargetClass())
             );
+            case Mapped:             return new LoadedObject(
+                    ObjectTypes.mappedBuildables.get(response.getTargetClass()).build((Map<String, String>) parserVal, parserVal, field, this),
+                    ObjectTypes.mappedBuildables.get(response.getTargetClass())
+            );
         }
-        return new LoadedObject(
-                ObjectTypes.buildables.get(response.getTargetClass()).build((String) parserVal),
-                ObjectTypes.buildables.get(response.getTargetClass())
-        );
-
+        return null;
     }
-    //Strictly for Buildables NO COMPLEX
     public Object getLoadedObject(Object parserVal, Class<?> clazz) {
         Object locateResult = locate((Class<?>) clazz);
         if (locateResult instanceof Error) return locateResult;
         Response response = (Response) locateResult;
-        return new LoadedObject(
-                ObjectTypes.buildables.get(response.getTargetClass()).build((String) parserVal),
-                ObjectTypes.buildables.get(response.getTargetClass())
-        );
+        switch (response.getType()) {
+            case Simple:         return new LoadedObject(
+                    ObjectTypes.buildables.get(response.getTargetClass()).build((String) parserVal),
+                    ObjectTypes.buildables.get(response.getTargetClass()));
+            case Complex:            return new LoadedObject(
+                    ObjectTypes.complexBuildables.get(response.getTargetClass()).build((Collection<String>) parserVal, parserVal, null, this),
+                    ObjectTypes.complexBuildables.get(response.getTargetClass())
+            );
+            case Mapped:             return new LoadedObject(
+                    ObjectTypes.mappedBuildables.get(response.getTargetClass()).build((Map<String, String>) parserVal, parserVal,null, this),
+                    ObjectTypes.mappedBuildables.get(response.getTargetClass())
+            );
+        }
+        return null;
 
     }
 
     private Object locate(Object o) {
-        Response simple = locate(o, ObjectTypes.buildables, false);
-        Response complexx = locate(o, ObjectTypes.complexBuildables, true);
+        Response simple = locate(o, ObjectTypes.buildables, Type.Simple);
+        Response complexx = locate(o, ObjectTypes.complexBuildables, Type.Complex);
+        Response mapped = locate(o, ObjectTypes.complexBuildables, Type.Mapped);
         if (simple.getPrecision() == Precision.None && complexx.getPrecision() == Precision.None) {
             return new Error(ErrorType.Non_Buildable_Object).addObject(o)
                     .addMessage("A builder could not be found for Object '" + o.getClass().getName() + "' in package " + o.getClass().getPackage().getName())
@@ -168,8 +180,9 @@ public class TypeAdapter {
     }
 
     private Object locate(Class<?> clazz) {
-        Response simple = locate((Class<?>) clazz, ObjectTypes.buildables, false);
-        Response complexx = locate((Class<?>) clazz, ObjectTypes.complexBuildables, true);
+        Response simple = locate((Class<?>) clazz, ObjectTypes.buildables, Type.Simple);
+        Response complexx = locate((Class<?>) clazz, ObjectTypes.complexBuildables, Type.Complex);
+        Response mapped = locate((Class<?>) clazz, ObjectTypes.complexBuildables, Type.Mapped);
         if (simple.getPrecision() == Precision.None && complexx.getPrecision() == Precision.None) {
             return new Error(ErrorType.Non_Buildable_Object).addObject(clazz)
                     .addMessage("A builder could not be found for Class '" + clazz + "' in package " + clazz.getPackage().getName())

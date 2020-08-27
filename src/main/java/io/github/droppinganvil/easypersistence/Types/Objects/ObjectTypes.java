@@ -8,4 +8,5 @@ import java.util.HashMap;
 public class ObjectTypes {
     public static HashMap<Class<?>, Buildable> buildables = new HashMap<Class<?>, Buildable>();
     public static HashMap<Class<?>, ComplexBuildable> complexBuildables = new HashMap<Class<?>, ComplexBuildable>();
+    public static HashMap<Class<?>, MappedBuildable> mappedBuildables = new HashMap<Class<?>, MappedBuildable>();
 }

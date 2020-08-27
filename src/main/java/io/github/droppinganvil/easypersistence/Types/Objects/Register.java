@@ -13,9 +13,11 @@ public class Register {
         register(new PersistentDouble());
         register(new PersistentCollection());
         register(new PersistentLong());
+        register(new PersistentMap());
     }
     public static void register(Buildable b) {
         ObjectTypes.buildables.put(b.getObjectClass(), b);
     }
     public static void register(ComplexBuildable cb) {ObjectTypes.complexBuildables.put(cb.getObjectClass(), cb);}
+    public static void register(MappedBuildable mb) {ObjectTypes.mappedBuildables.put(mb.getObjectClass(), mb);}
 }

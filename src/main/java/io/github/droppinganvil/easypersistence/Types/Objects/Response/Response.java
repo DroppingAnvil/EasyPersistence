@@ -3,12 +3,13 @@ package io.github.droppinganvil.easypersistence.Types.Objects.Response;
 public class Response {
     private Precision precision;
     private Class<?> target;
-    private Boolean complex;
+    private Type type;
 
-    public Response(Precision precision, Class<?> target, Boolean complex) {
+
+    public Response(Precision precision, Class<?> target, Type type) {
         this.precision = precision;
         this.target = target;
-        this.complex = complex;
+        this.type = type;
     }
 
     public Class<?> getTargetClass() {
@@ -19,5 +20,5 @@ public class Response {
         return precision;
     }
 
-    public Boolean isComplex() {return complex;}
+    public Type getType() {return type;}
 }

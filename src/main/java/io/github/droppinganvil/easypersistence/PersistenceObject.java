@@ -77,6 +77,7 @@ public class PersistenceObject extends Identifier {
     }
     public void loadNow() {
         if (getLoaded()) return;
+        checkDirectory();
         super.getUser().getAdapter().loadObject(this);
         setLoaded();
     }
