@@ -10,7 +10,6 @@ Currently Supported:
 - Plans to add MySQL DB automation
 ## Persistence actually desinged for an OOPL
 EasyPersistence uses an Identifier for each PersistenceObject this Identifier contains 3 main metrics, a projectID, classID, and objectID this allows you to have an endless amount of Objects attached to each class registered. 
-This is a great way to real time load users data an example Identifier would be EasyPersistance, Example, DroppingAnvil.
 Now remember all you have to do is make sure to use an objectID that will be unique to that object only and the rest is handled by EasyPersistence if your project and classes are registered properly.
 ### Object Creation
 You might be asking yourself "how will I implement my own objects?" and the answer is quite simple all you need to do is register a ComplexBuilder or just a Builder that will handle the transition to and from the String(s), if one is not found for the Object the system will attempt to cast other Builders and ComplexBuilders to the Object that needs to be built.
@@ -20,3 +19,7 @@ Default Objects: (Objects that will be recognized without modification)
 - Boolean
 - Double
 - Collection
+## TODO
+In retrospective Strings should not have been used like they were in the builders, it is functional but inneficient this is a planned change.  
+Add cryptography functions, most likely based on OpenPGP
+Implementation guide
