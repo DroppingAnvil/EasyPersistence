@@ -1,4 +1,6 @@
-# EasyPersistence
+# EasyPersistence  
+[![CodeFactor](https://www.codefactor.io/repository/github/droppinganvil/easypersistence/badge)](https://www.codefactor.io/repository/github/droppinganvil/easypersistence)  
+
 Object persistence library designed for easy quick managed persistence automation
 ## Setup
 coming soon
