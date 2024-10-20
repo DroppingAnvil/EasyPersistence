@@ -1,5 +1,5 @@
 # EasyPersistence
-Object persistence system designed for easy quick managed persistence automation
+Object persistence library designed for easy quick managed persistence automation
 ## Setup
 coming soon
 ## Formats
