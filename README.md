@@ -2,7 +2,7 @@
 Object persistence system designed for easy quick managed persistence automation
 ## Setup
 coming soon
-## File Formats
+## Formats
 EasyPersistence was designed so we can add support for file formats with ease!
 Currently Supported:
 - JSON
