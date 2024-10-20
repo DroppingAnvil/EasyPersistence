@@ -7,6 +7,7 @@ EasyPersistence was designed so we can add support for file formats with ease!
 Currently Supported:
 - JSON
 - YAML
+- Plans to add MySQL DB automation
 ## Persistence actually desinged for an OOPL
 EasyPersistence uses an Identifier for each PersistenceObject this Identifier contains 3 main metrics, a projectID, classID, and objectID this allows you to have an endless amount of Objects attached to each class registered. 
 This is a great way to real time load users data an example Identifier would be EasyPersistance, Example, DroppingAnvil.
