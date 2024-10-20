@@ -8,7 +8,7 @@ Currently Supported:
 - JSON
 - YAML
 - Plans to add MySQL DB automation
-## Persistence actually desinged for an OOPL
+## How it works
 EasyPersistence uses an Identifier for each PersistenceObject this Identifier contains 3 main metrics, a projectID, classID, and objectID this allows you to have an endless amount of Objects attached to each class registered. 
 Now remember all you have to do is make sure to use an objectID that will be unique to that object only and the rest is handled by EasyPersistence if your project and classes are registered properly.
 ### Object Creation
@@ -24,4 +24,6 @@ In retrospective Strings should not have been used like they were in the builder
 
 Add cryptography functions, most likely based on OpenPGP  
 
-Implementation guide
+Implementation guide  
+
+Better way of adding types
