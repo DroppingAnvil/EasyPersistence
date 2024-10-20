@@ -21,5 +21,6 @@ Default Objects: (Objects that will be recognized without modification)
 - Collection
 ## TODO
 In retrospective Strings should not have been used like they were in the builders, it is functional but inneficient this is a planned change.  
-Add cryptography functions, most likely based on OpenPGP
+Add cryptography functions, most likely based on OpenPGP  
+
 Implementation guide
